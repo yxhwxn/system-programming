@@ -1,0 +1,84 @@
+# 변수 정의 시작
+CC = gcc                                   # 컴파일러로 gcc 사용
+CFLAGS = -Wall -Wextra -O2                 # 컴파일 플래그: 모든 경고 표시, 추가 경고, 최적화 레벨 2
+LDFLAGS =                                   # 링크 플래그 (현재는 비어 있음)
+TARGET = myapp                             # 생성할 실행 파일 이름
+
+# 모든 소스 파일을 재귀적으로 찾기
+SRC_DIR = src                              # 소스 파일이 위치한 디렉토리
+SRCS = $(shell find $(SRC_DIR) -name '*.c')  # 모든 .c 파일을 찾아서 SRCS에 저장
+OBJS = $(SRCS:.c=.o)                       # SRCS에서 .c를 .o로 바꿔서 오브젝트 파일 목록 생성
+
+# 포함 디렉토리 설정
+INCLUDE_DIR = include                      # 헤더 파일이 위치한 디렉토리
+
+# 라이브러리 설정
+LIB_DIR = lib                              # 라이브러리 파일이 위치한 디렉토리
+LIBS = -lm -lpthread                       # 링크할 라이브러리: 수학 라이브러리와 pthread
+
+# 기본 규칙 정의
+.PHONY: all                                # all 타겟을 가짜 타겟으로 선언
+all: $(TARGET)                             # 'all' 타겟은 실행 파일에 의존
+
+# 오브젝트 파일을 링크하여 실행 파일 생성
+$(TARGET): $(OBJS)                         # 실행 파일은 모든 오브젝트 파일에 의존
+	@echo "Linking $@..."                 # 현재 타겟을 링크 중임을 출력
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)     # 오브젝트 파일을 링크하여 실행 파일 생성
+
+# .c 파일을 .o 파일로 컴파일하는 패턴 규칙
+%.o: %.c                                   # 모든 .c 파일에 대한 규칙
+	@echo "Compiling $<..."               # 현재 컴파일 중인 파일을 출력
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@  # .c 파일을 .o 파일로 컴파일
+
+# 생성된 파일 정리 규칙
+.PHONY: clean                              # clean 타겟을 가짜 타겟으로 선언
+clean:                                     # clean 타겟 정의 시작
+	@echo "Cleaning up..."                # 정리 중임을 출력
+	@find . -name '*.o' -delete           # 현재 디렉토리에서 모든 .o 파일 삭제
+	@rm -f $(TARGET)                      # 실행 파일 삭제
+
+# 실행 파일 및 리소스 설치 규칙
+.PHONY: install                            # install 타겟을 가짜 타겟으로 선언
+install: $(TARGET)                         # install 타겟은 실행 파일에 의존
+	@echo "Installing..."                 # 설치 중임을 출력
+	@mkdir -p /usr/local/bin              # 설치 디렉토리가 없으면 생성
+	@cp $(TARGET) /usr/local/bin          # 실행 파일을 설치 디렉토리에 복사
+
+# 설치된 파일 제거 규칙
+.PHONY: uninstall                          # uninstall 타겟을 가짜 타겟으로 선언
+uninstall:                                 # uninstall 타겟 정의 시작
+	@echo "Uninstalling..."               # 제거 중임을 출력
+	@rm -f /usr/local/bin/$(TARGET)       # 설치된 실행 파일 삭제
+
+# Doxygen을 사용하여 문서 생성 규칙
+.PHONY: docs                               # docs 타겟을 가짜 타겟으로 선언
+docs:                                      # docs 타겟 정의 시작
+	@echo "Generating documentation..."   # 문서 생성 중임을 출력
+	@doxygen Doxyfile                     # Doxygen을 사용하여 문서 생성
+
+# 조건부 컴파일 설정
+ifeq ($(DEBUG), 1)                         # DEBUG 변수가 1인지 확인
+	CFLAGS += -g -DDEBUG                  # 디버깅 플래그 추가 및 DEBUG 매크로 정의
+endif                                      # 조건문 종료
+
+# 자동 의존성 생성 설정
+DEPS = $(SRCS:.c=.d)                       # 소스 파일에 대한 의존성 파일 목록 생성
+-include $(DEPS)                           # 의존성 파일 포함 (파일이 없어도 에러 없음)
+
+# 의존성 파일을 생성하는 규칙
+%.d: %.c                                   # 모든 .c 파일에 대한 의존성 파일 생성 규칙
+	@set -e; rm -f $@; \                  # 에러 시 종료, 기존 의존성 파일 삭제
+	$(CC) -MM $(CFLAGS) -I$(INCLUDE_DIR) $< > $@.$$$$; \  # 임시 파일에 의존성 정보 저장
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \  # 임시 파일을 가공하여 의존성 파일 생성
+	rm -f $@.$$$$                         # 임시 파일 삭제
+
+# 도움말 메시지 표시 규칙
+.PHONY: help                               # help 타겟을 가짜 타겟으로 선언
+help:                                      # help 타겟 정의 시작
+	@echo "사용 가능한 타겟:"             # 사용 가능한 타겟 목록 출력 시작
+	@echo "  all        - 애플리케이션 빌드"   # 'all' 타겟 설명 출력
+	@echo "  clean      - 생성된 파일 삭제"    # 'clean' 타겟 설명 출력
+	@echo "  install    - 애플리케이션 설치"   # 'install' 타겟 설명 출력
+	@echo "  uninstall  - 애플리케이션 제거"   # 'uninstall' 타겟 설명 출력
+	@echo "  docs       - 문서 생성"           # 'docs' 타겟 설명 출력
+	@echo "  help       - 이 도움말 메시지 표시" # 'help' 타겟 설명 출력

@@ -1,0 +1,40 @@
+#INCLUDE <STDIO.H>
+#INCLUDE <STDLIB.H>
+#INCLUDE <CTYPE.H>
+
+INT MAIN(INT ARGC, CHAR *ARGV[]) {
+    // 명령줄 인자 확인
+    IF (ARGC != 3) {
+        FPRINTF(STDERR, "USAGE: %S <INPUT_FILE> <OUTPUT_FILE>\N", ARGV[0]);
+        RETURN 1; // 프로그램 비정상 종료
+    }
+
+    // 파일 포인터 선언
+    FILE *INPUTFILE = FOPEN(ARGV[1], "R");
+    IF (INPUTFILE == NULL) {
+        PERROR("ERROR OPENING INPUT FILE"); // 입력 파일 열기 실패 시 오류 메시지 출력
+        RETURN 1;
+    }
+
+    FILE *OUTPUTFILE = FOPEN(ARGV[2], "W");
+    IF (OUTPUTFILE == NULL) {
+        PERROR("ERROR OPENING OUTPUT FILE"); // 출력 파일 열기 실패 시 오류 메시지 출력
+        FCLOSE(INPUTFILE); // 입력 파일 닫기
+        RETURN 1;
+    }
+
+    // 파일의 각 문자를 읽어서 대문자로 변환 후 출력 파일에 작성
+    CHAR CH;
+    WHILE ((CH = FGETC(INPUTFILE)) != EOF) {
+        FPUTC(TOUPPER((UNSIGNED CHAR)CH), OUTPUTFILE); // 대문자로 변환하여 출력 파일에 저장
+    }
+
+    // 파일 닫기
+    FCLOSE(INPUTFILE);
+    FCLOSE(OUTPUTFILE);
+
+    PRINTF("FILE HAS BEEN CONVERTED TO UPPERCASE AND SAVED AS '%S'.\N", ARGV[2]);
+
+    RETURN 0; // 프로그램 정상 종료
+}
+

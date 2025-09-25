@@ -1,0 +1,9 @@
+내용: IPC
+숙제1: IPC의 실습 내용 및 빈칸 채우기
+숙제2: 추가 프로그램 작성: Inter-Process Communication (1) 
+pipe.c 에 추가하여 child도 parent에게 메시지를 전달하도록 변경
+숙제3: 추가 프로그램 작성: Inter-Process Communication (2)
+
+mipc.c 를 shared memory system call을 사용하도록 변경
+
+[Hint] open, mmap 대신 shmget, shmat를 사용
